@@ -1,0 +1,15 @@
+{
+  "name": "native-menus",
+  "version": "1.0.0",
+  "description": "Programmatically generating menu entries for macOS and Windows",
+  "main": "index.js",
+  "repository": "https://github.com/christophpurrer/native-menus.git",
+  "author": "Christoph Purrer <christophpurrer@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "clang-format": "^1.5.0"
+  },
+  "scripts": {
+    "clang-format": "clang-format -i macOS/macOS/*.h && clang-format -i macOS/macOS/*.mm && clang-format -i shared/*.h"
+  }
+}
