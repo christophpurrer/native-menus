@@ -7,6 +7,7 @@
 
 #import "MainWindowController.h"
 #import "Menu.h"
+#include <typeinfo>
 
 @implementation MainWindowController {
 }
@@ -19,59 +20,39 @@
     return self;
 }
 
-- (void)sayHelloToPerson {
-    createMenu2();
+- (IBAction)menuItemClicked:(id)sender {
+    if ([sender conformsToProtocol:@protocol(NSUserInterfaceItemIdentification)] &&
+        [sender identifier]) {
+        NSLog(@"menuItem: %@", ((NSMenuItem *) sender).title);
+    }
 }
 
-void  createMenu2() {
+void createAppMenu() {
+    // https://medium.com/@theboi/macos-apps-without-storyboard-or-xib-menu-bar-in-swift-5-menubar-and-toolbar-6f6f2fa39ccb
+    auto applicationMenus = createApplicationMenu();
     NSMenu* menubar = [NSMenu new];
-    for(int i=0;i<3;i++) {
-    {
-        NSMenuItem* appMenuItem = [NSMenuItem new];
-        [menubar addItem:appMenuItem];
+    for (auto const& applicationMenu : applicationMenus) {
+        NSMenuItem* menuItem = [NSMenuItem new];
+        [menubar addItem:menuItem];
+        NSMenu* menu = [NSMenu new];
+        menu.title = [NSString stringWithUTF8String: applicationMenu.title.c_str()];
         
-        NSMenu* appMenu = [NSMenu new];
-        appMenu.title = @"No we are talking";
-        
-        NSString* toggleFullScreenTitle = @"Toggle Full Screen";
-        NSMenuItem* toggleFullScreenMenuItem = [[NSMenuItem alloc] initWithTitle:toggleFullScreenTitle
-                                                                          action:@selector(sayHelloToPerson)
-                                                                   keyEquivalent:@"f"];
-        [appMenu addItem:toggleFullScreenMenuItem];
-        
-        NSString* quitTitle = [@"FFFFFF " stringByAppendingString:@"App"];
-        NSMenuItem* quitMenuItem = [[NSMenuItem alloc] initWithTitle:quitTitle
-                                                              action:@selector(terminate:)
-                                                       keyEquivalent:@"q"];
-        [appMenu addItem:quitMenuItem];
-        [appMenuItem setSubmenu:appMenu];
-    }
-    }
-    NSApplication.sharedApplication.menu = menubar;
-}
-
-
-void  createMenu() {
-    NSMenu* menubar = [NSMenu new];
-    {
-        NSMenuItem* appMenuItem = [NSMenuItem new];
-        [menubar addItem:appMenuItem];
-        
-        NSMenu* appMenu = [NSMenu new];
-        appMenu.title = @"No we are talking";
-        
-        NSString* toggleFullScreenTitle = @"Toggle Full Screen";
-        NSMenuItem* toggleFullScreenMenuItem = [[NSMenuItem alloc] initWithTitle:toggleFullScreenTitle
-                                                                          action:@selector(sayHelloToPerson)
-                                                                   keyEquivalent:@"f"];
-        [appMenu addItem:toggleFullScreenMenuItem];
-        
-        NSString* quitTitle = [@"FFFFFF " stringByAppendingString:@"App"];
-        NSMenuItem* quitMenuItem = [[NSMenuItem alloc] initWithTitle:quitTitle
-                                                              action:@selector(terminate:)
-                                                       keyEquivalent:@"q"];
-        [appMenu addItem:quitMenuItem];
-        [appMenuItem setSubmenu:appMenu];
+        for (auto& menuEntry : applicationMenu.entries) {
+            auto menuEntryItem = dynamic_cast<MenuEntry*>(menuEntry.get());
+            if (menuEntryItem) { //
+                NSString* title =[NSString stringWithUTF8String: menuEntryItem->title.c_str()];
+                NSMenuItem* subMenuItem = [[NSMenuItem alloc] initWithTitle:title
+                                                                     action:@selector(menuItemClicked:)
+                                                              keyEquivalent:@""];
+                [subMenuItem setEnabled:menuEntryItem->enabled ? YES : NO];
+                [menu addItem:subMenuItem];
+            }
+            auto menuEntrySeparator = dynamic_cast<Separator*>(menuEntry.get());
+            if (menuEntrySeparator) {
+                [menu addItem: [NSMenuItem separatorItem]];              
+            }
+        }
+        [menuItem setSubmenu:menu];
     }
     NSApplication.sharedApplication.menu = menubar;
 }
@@ -86,11 +67,10 @@ void  createMenu() {
     self.window.title = @"App";
     self.window.delegate = self;
     [self.window makeKeyAndOrderFront:NULL];
-    
     // Default the window to the center of the screen.
-    createMenu();
     [NSMenu setMenuBarVisible:YES];
     [self.window center];
+    createAppMenu();
 }
 
 
