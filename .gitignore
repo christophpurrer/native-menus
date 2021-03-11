@@ -34,4 +34,9 @@
 # macOS
 .DS_Store
 
+# NodeJS
 node_modules
+
+# Windows
+Debug
+.vs
