@@ -8,7 +8,7 @@
 #import "MainWindowController.h"
 #import "Menu.h"
 
-@interface MainWindowController()
+@interface MainWindowController ()
 - (void)indexApplicationMenu;
 @end
 
@@ -76,7 +76,7 @@ void createAppMenu() {
                            action:@selector(menuItemClicked:)
                     keyEquivalent:@""];
                 subMenuItem.identifier = [@(identifier++) stringValue];
-                
+
                 [subMenuItem setEnabled:menuEntryItem->enabled ? YES : NO];
                 [menu addItem:subMenuItem];
             }
