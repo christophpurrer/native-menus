@@ -8,7 +8,12 @@
 #import "MainWindowController.h"
 #import "Menu.h"
 
+@interface MainWindowController()
+- (void)indexApplicationMenu;
+@end
+
 @implementation MainWindowController {
+    NSMapTable<NSString *, NSMenuItem *> *_menuItems;
 }
 
 - (instancetype)init {
@@ -27,16 +32,39 @@
     }
 }
 
+- (void)indexApplicationMenu {
+    if (!_menuItems) {
+        _menuItems = [NSMapTable strongToWeakObjectsMapTable];
+        NSMutableArray<NSMenu *> *queue = [NSMutableArray new];
+        [queue addObject:NSApplication.sharedApplication.menu];
+        while (queue.count) {
+            NSMenu *menu = queue.lastObject;
+            [queue removeLastObject];
+            for (NSMenuItem *menuItem in menu.itemArray) {
+                if (menuItem.identifier &&
+                    [menuItem.identifier isKindOfClass:[NSString class]]) {
+                    [_menuItems setObject:menuItem forKey:menuItem.identifier];
+                }
+                if (menuItem.submenu) {
+                    [queue addObject:menuItem.submenu];
+                }
+            }
+        }
+    }
+}
+
 void createAppMenu() {
     // https://medium.com/@theboi/macos-apps-without-storyboard-or-xib-menu-bar-in-swift-5-menubar-and-toolbar-6f6f2fa39ccb
     auto applicationMenus = createApplicationMenu();
     NSMenu *menubar = [NSMenu new];
+    int identifier = 0;
     for (auto const &applicationMenu : applicationMenus) {
         NSMenuItem *menuItem = [NSMenuItem new];
         [menubar addItem:menuItem];
         NSMenu *menu = [NSMenu new];
         menu.title =
             [NSString stringWithUTF8String:applicationMenu.title.c_str()];
+        menuItem.identifier = [@(identifier++) stringValue];
 
         for (auto &menuEntry : applicationMenu.entries) {
             auto menuEntryItem = dynamic_cast<MenuEntry *>(menuEntry.get());
@@ -47,6 +75,8 @@ void createAppMenu() {
                     initWithTitle:title
                            action:@selector(menuItemClicked:)
                     keyEquivalent:@""];
+                subMenuItem.identifier = [@(identifier++) stringValue];
+                
                 [subMenuItem setEnabled:menuEntryItem->enabled ? YES : NO];
                 [menu addItem:subMenuItem];
             }
@@ -79,6 +109,8 @@ void createAppMenu() {
     [NSMenu setMenuBarVisible:YES];
     [self.window center];
     createAppMenu();
+    [self indexApplicationMenu];
+    [self indexApplicationMenu];
 }
 
 #pragma mark - NSWindowDelegate
